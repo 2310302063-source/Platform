@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnHub Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+        .tab-active { border-bottom: 3px solid #667eea; }
+        .metric-box { background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+
+    <script>
+        // Admin Dashboard App
+        const app = document.getElementById('app');
+        
+        class AdminDashboard {
+            constructor() {
+                this.backendUrl = 'http://localhost:5000';
+                this.activeTab = 'overview';
+                this.init();
+            }
+
+            async init() {
+                this.render();
+                await this.checkBackendStatus();
+            }
+
+            async checkBackendStatus() {
+                try {
+                    const response = await fetch(`${this.backendUrl}/health`);
+                    const data = await response.json();
+                    console.log('Backend Status:', data);
+                    this.updateBackendStatus(data);
+                } catch (error) {
+                    console.error('Backend error:', error);
+                    this.updateBackendStatus(null);
+                }
+            }
+
+            updateBackendStatus(data) {
+                const statusEl = document.getElementById('backend-status');
+                if (statusEl && data) {
+                    statusEl.innerHTML = `
+                        <span class="status-badge status-active">
+                            <i class="fas fa-check-circle"></i> Connected
+                        </span>
+                    `;
+                } else if (statusEl) {
+                    statusEl.innerHTML = `
+                        <span class="status-badge status-error">
+                            <i class="fas fa-times-circle"></i> Disconnected
+                        </span>
+                    `;
+                }
+            }
+
+            switchTab(tab) {
+                this.activeTab = tab;
+                this.render();
+            }
+
+            render() {
+                app.innerHTML = `
+                    <div class="min-h-screen bg-gray-900 text-white">
+                        <!-- Header -->
+                        <header class="gradient-bg p-6 shadow-lg">
+                            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                                <div>
+                                    <h1 class="text-3xl font-bold">🎓 LearnHub Admin</h1>
+                                    <p class="text-blue-100 text-sm mt-1">Platform Control Center</p>
+                                </div>
+                                <div class="text-right">
+                                    <div id="backend-status" class="mt-2">
+                                        <span class="status-badge status-error">
+                                            <i class="fas fa-spinner fa-spin"></i> Checking...
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <!-- Navigation Tabs -->
+                        <nav class="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
+                            <div class="max-w-7xl mx-auto px-6 flex gap-8">
+                                ${this.renderTabs()}
+                            </div>
+                        </nav>
+
+                        <!-- Content -->
+                        <main class="max-w-7xl mx-auto p-6">
+                            ${this.renderContent()}
+                        </main>
+
+                        <!-- Footer -->
+                        <footer class="bg-gray-800 border-t border-gray-700 mt-12">
+                            <div class="max-w-7xl mx-auto p-6 text-center text-gray-400 text-sm">
+                                <p>Social Learning Platform v1.0.0 • Backend: ${this.backendUrl}</p>
+                                <p class="mt-2">🔐 E2E Encryption Enabled • 🤖 AI Monitoring Active</p>
+                            </div>
+                        </footer>
+                    </div>
+                `;
+
+                // Re-attach event listeners
+                document.querySelectorAll('[data-tab]').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.switchTab(el.dataset.tab);
+                    });
+                });
+            }
+
+            renderTabs() {
+                const tabs = [
+                    { id: 'overview', label: '📊 Overview', icon: 'chart-line' },
+                    { id: 'alerts', label: '🚨 Alerts', icon: 'bell' },
+                    { id: 'governance', label: '⚖️ Governance', icon: 'gavel' },
+                    { id: 'ai-control', label: '🤖 AI Control', icon: 'brain' },
+                    { id: 'analytics', label: '📈 Analytics', icon: 'chart-bar' }
+                ];
+
+                return tabs.map(tab => `
+                    <button data-tab="${tab.id}" class="py-4 px-2 border-b-2 transition whitespace-nowrap ${
+                        this.activeTab === tab.id 
+                            ? 'border-blue-500 text-blue-400' 
+                            : 'border-transparent text-gray-400 hover:text-white'
+                    }">
+                        <i class="fas fa-${tab.icon} mr-2"></i>${tab.label}
+                    </button>
+                `).join('');
+            }
+
+            renderContent() {
+                switch (this.activeTab) {
+                    case 'overview':
+                        return this.renderOverview();
+                    case 'alerts':
+                        return this.renderAlerts();
+                    case 'governance':
+                        return this.renderGovernance();
+                    case 'ai-control':
+                        return this.renderAIControl();
+                    case 'analytics':
+                        return this.renderAnalytics();
+                    default:
+                        return '';
+                }
+            }
+
+            renderOverview() {
+                return `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold mb-6">Platform Overview</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            ${this.renderMetricCard('Total Users', '2,547', '↑ 12% this week', 'users')}
+                            ${this.renderMetricCard('Active Sessions', '847', '↑ 5% today', 'circle-nodes')}
+                            ${this.renderMetricCard('Revenue', '$12,450', '↑ 28% this month', 'coins')}
+                            ${this.renderMetricCard('AI Threats Blocked', '143', '↑ 2% this hour', 'shield')}
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-xl font-bold mb-4">🎯 System Status</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span>Backend API</span>
+                                        <span class="status-badge status-active">Operational</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Firebase Firestore</span>
+                                        <span class="status-badge status-active">Connected</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>AI Monitoring</span>
+                                        <span class="status-badge status-active">Active</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>E2E Encryption</span>
+                                        <span class="status-badge status-active">Enabled</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-xl font-bold mb-4">📋 Quick Actions</h3>
+                                <div class="space-y-2">
+                                    <button class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition">
+                                        View All Users
+                                    </button>
+                                    <button class="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition">
+                                        Check Payments
+                                    </button>
+                                    <button class="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
+                                        View Security Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderAlerts() {
+                return `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold mb-6">🚨 Security Alerts</h2>
+                        
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
+                            <div class="bg-red-900 bg-opacity-20 border border-red-700 p-4 rounded">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-exclamation-triangle text-red-500 mt-1"></i>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-red-400">Suspicious Login Attempt</h4>
+                                        <p class="text-sm text-gray-300 mt-1">Multiple failed logins from IP 192.168.1.100</p>
+                                        <p class="text-xs text-gray-400 mt-2">2 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-yellow-900 bg-opacity-20 border border-yellow-700 p-4 rounded">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-warning text-yellow-500 mt-1"></i>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-yellow-400">High API Usage Detected</h4>
+                                        <p class="text-sm text-gray-300 mt-1">API calls exceeded 1000 req/min threshold</p>
+                                        <p class="text-xs text-gray-400 mt-2">15 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-green-900 bg-opacity-20 border border-green-700 p-4 rounded">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-green-400">Security Scan Complete</h4>
+                                        <p class="text-sm text-gray-300 mt-1">All systems passed daily security audit</p>
+                                        <p class="text-xs text-gray-400 mt-2">1 hour ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderGovernance() {
+                return `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold mb-6">⚖️ Content Governance</h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-xl font-bold mb-4">Content Moderation</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span>Pending Review</span>
+                                        <span class="bg-orange-500 bg-opacity-20 text-orange-400 px-3 py-1 rounded">24</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Approved Today</span>
+                                        <span class="bg-green-500 bg-opacity-20 text-green-400 px-3 py-1 rounded">156</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Violations Flagged</span>
+                                        <span class="bg-red-500 bg-opacity-20 text-red-400 px-3 py-1 rounded">8</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-xl font-bold mb-4">Policy Enforcement</h3>
+                                <button class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition mb-2">
+                                    Update Content Policy
+                                </button>
+                                <button class="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
+                                    View Moderation Queue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderAIControl() {
+                return `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold mb-6">🤖 AI Monitoring Control</h2>
+                        
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-bold mb-6">AI Sensitivity Settings</h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block mb-2 font-semibold">Threat Detection Level</label>
+                                    <input type="range" min="0" max="100" value="70" class="w-full">
+                                    <p class="text-sm text-gray-400 mt-1">Current: High (70%)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block mb-2 font-semibold">Content Moderation Strictness</label>
+                                    <input type="range" min="0" max="100" value="60" class="w-full">
+                                    <p class="text-sm text-gray-400 mt-1">Current: Medium (60%)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block mb-2 font-semibold">Anomaly Detection Sensitivity</label>
+                                    <input type="range" min="0" max="100" value="80" class="w-full">
+                                    <p class="text-sm text-gray-400 mt-1">Current: Very High (80%)</p>
+                                </div>
+                            </div>
+
+                            <button class="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded transition mt-6 font-semibold">
+                                Save AI Settings
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderAnalytics() {
+                return `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold mb-6">📈 Platform Analytics</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-lg font-bold mb-4">User Growth (Last 7 Days)</h3>
+                                <div class="text-3xl font-bold text-blue-400">↑ 12%</div>
+                                <p class="text-sm text-gray-400 mt-2">285 new users this week</p>
+                            </div>
+
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-lg font-bold mb-4">Engagement Rate</h3>
+                                <div class="text-3xl font-bold text-green-400">78.5%</div>
+                                <p class="text-sm text-gray-400 mt-2">↑ 3.2% from last week</p>
+                            </div>
+
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-lg font-bold mb-4">Revenue Per User</h3>
+                                <div class="text-3xl font-bold text-purple-400">$4.89</div>
+                                <p class="text-sm text-gray-400 mt-2">Total revenue: $12,450</p>
+                            </div>
+
+                            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                                <h3 class="text-lg font-bold mb-4">Security Score</h3>
+                                <div class="text-3xl font-bold text-green-400">94/100</div>
+                                <p class="text-sm text-gray-400 mt-2">Excellent protection level</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderMetricCard(title, value, subtitle, icon) {
+                return `
+                    <div class="metric-box bg-gray-800 p-6 rounded-lg border border-gray-700 card">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-400 text-sm font-semibold">${title}</p>
+                                <p class="text-3xl font-bold mt-2">${value}</p>
+                                <p class="text-green-400 text-xs mt-2">${subtitle}</p>
+                            </div>
+                            <i class="fas fa-${icon} text-2xl text-blue-400 opacity-50"></i>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize dashboard when DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            new AdminDashboard();
+        });
+    </script>
+</body>
+</html>

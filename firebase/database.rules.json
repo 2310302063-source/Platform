@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'",
+        ".write": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    "chatRooms": {
+      "$roomId": {
+        ".read": "auth.uid != null",
+        ".write": "auth.uid != null",
+        "messages": {
+          ".read": "auth.uid != null",
+          ".write": "auth.uid != null"
+        }
+      }
+    },
+    "peerRegistry": {
+      "$peerId": {
+        ".read": "auth.uid != null",
+        ".write": "auth.uid != null"
+      }
+    },
+    "notifications": {
+      "$userId": {
+        ".read": "$userId === auth.uid",
+        ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}

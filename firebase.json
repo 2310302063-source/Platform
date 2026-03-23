@@ -1,0 +1,53 @@
+ {
+       "projects": {
+         "default": "ndidi-8d9fc"
+       },
+       "hosting": {
+        "public": "dist",
+        "rewrites": [
+          {
+            "source": "**",
+            "destination": "/index.html"
+          }
+        ],
+        "ignore": [
+           "firebase.json",
+           "**/.*",
+          "**/node_modules/**"
+        ]
+      },
+      "firestore": {
+        "rules": "firebase/firestore.rules"
+      },
+      "database": {
+        "rules": "firebase/database.rules.json"
+      },
+      "storage": {
+        "rules": "storage.rules"
+      },
+      "emulators": {
+        "auth": {
+          "host": "localhost",
+          "port": 9099
+       },
+        "firestore": {
+          "host": "localhost",
+          "port": 8080
+        },
+        "database": {
+          "host": "localhost",
+          "port": 9000
+        },
+        "storage": {
+          "host": "localhost",
+          "port": 9199
+        },
+        "hub": {
+          "host": "localhost",
+          "port": 4400
+       },
+        "logging": {
+          "level": "debug"
+        }
+      }
+    }
